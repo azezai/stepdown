@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Stepdown">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
+</head>
+<body>
+<title>Stepdown</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: single phone-first column; today's counter dominates, plan and history below */
+:root{
+  --bg:#eef2f1; --surface:#ffffff; --fg:#17211f; --muted:#5d6b68; --line:#d5dedb;
+  --accent:#1f7a68; --accent-soft:#d6ece6; --warn:#b4541a; --warn-soft:#f6e3d6;
+  --display:"Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101716; --surface:#18211f; --fg:#e4ecea; --muted:#94a5a1; --line:#2a3633;
+  --accent:#4fbea4; --accent-soft:#1d3a33; --warn:#e8894f; --warn-soft:#3a2518; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101716; --surface:#18211f; --fg:#e4ecea; --muted:#94a5a1; --line:#2a3633;
+  --accent:#4fbea4; --accent-soft:#1d3a33; --warn:#e8894f; --warn-soft:#3a2518; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:520px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+h1{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:.02em;margin:0;text-transform:uppercase}
+.date{color:var(--muted);font-size:13px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.label{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+.today{display:flex;flex-direction:column;gap:14px}
+.count{display:flex;align-items:baseline;gap:10px}
+.count .n{font-family:var(--display);font-weight:800;font-size:88px;line-height:.9;font-variant-numeric:tabular-nums}
+.count .of{font-family:var(--display);font-weight:600;font-size:34px;color:var(--muted)}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(22px,1fr));gap:5px}
+.slot{height:30px;border-radius:4px;border:1.5px solid var(--line);background:transparent}
+.slot.used{background:var(--accent);border-color:var(--accent)}
+.slot.over{background:var(--warn);border-color:var(--warn)}
+.status{font-size:14px;padding:8px 12px;border-radius:8px;background:var(--accent-soft)}
+.status.over{background:var(--warn-soft);color:var(--fg)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+button{font:inherit;font-weight:600;border-radius:10px;padding:13px 16px;cursor:pointer;border:1.5px solid var(--line);background:var(--surface);color:var(--fg)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--fg);color:var(--bg);border-color:var(--fg);flex:1}
+button.ghost{flex:0 0 auto}
+.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.meta .v{font-family:var(--display);font-weight:600;font-size:28px;font-variant-numeric:tabular-nums}
+.craving{display:flex;flex-direction:column;gap:12px}
+.timer{font-family:var(--display);font-weight:800;font-size:56px;font-variant-numeric:tabular-nums;line-height:1}
+.tip{color:var(--muted);font-size:14px;min-height:42px}
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:130px;margin-top:10px}
+.bar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%;min-width:0}
+.bar .col{width:100%;max-width:34px;position:relative;height:100px;display:flex;align-items:flex-end}
+.bar .fill{width:100%;border-radius:4px 4px 0 0;background:var(--accent)}
+.bar .fill.over{background:var(--warn)}
+.bar .lim{position:absolute;left:-2px;right:-2px;border-top:2px dashed var(--muted)}
+.bar small{font-size:11px;color:var(--muted)}
+.bar b{font-size:12px;font-variant-numeric:tabular-nums}
+.plan{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.plan td{padding:6px 0;border-bottom:1px solid var(--line)}
+.plan td:last-child{text-align:right;font-weight:600}
+.plan tr.now td{color:var(--accent);font-weight:700}
+details summary{cursor:pointer;font-weight:600}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.settings label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.settings input{font:inherit;padding:9px 10px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);min-width:0}
+.note{font-size:12px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.slot,.fill{transition:background .2s,height .3s}}
+</style>
+
+<div class="wrap">
+  <header><h1>Stepdown</h1><span class="date" id="date"></span></header>
+
+  <section class="panel today">
+    <span class="label">Today</span>
+    <div class="count"><span class="n" id="n">0</span><span class="of">/ <span id="lim">20</span></span></div>
+    <div class="slots" id="slots"></div>
+    <div class="status" id="status"></div>
+    <div class="row">
+      <button class="primary" id="log">Log a cigarette</button>
+      <button class="ghost" id="undo">Undo</button>
+    </div>
+    <div class="meta">
+      <div><div class="label">Since last</div><div class="v" id="since">—</div></div>
+      <div><div class="label">Saved so far</div><div class="v" id="saved">€0</div></div>
+      <div><div class="label">Saved / month</div><div class="v" id="month">€0</div></div>
+    </div>
+  </section>
+
+  <section class="panel craving">
+    <span class="label">Craving? Wait it out</span>
+    <div class="timer" id="timer">5:00</div>
+    <div class="tip" id="tip">Most cravings fade within 3–5 minutes. Start the timer and do something else until it ends.</div>
+    <div class="row"><button id="crave">Start 5-minute delay</button><span class="note" id="beat" style="align-self:center"></span></div>
+  </section>
+
+  <section class="panel">
+    <span class="label">Last 7 days</span>
+    <div class="bars" id="bars"></div>
+    <p class="note">Dashed line = that day's limit.</p>
+  </section>
+
+  <section class="panel">
+    <span class="label">Your plan</span>
+    <table class="plan" id="plan"></table>
+    <details>
+      <summary>Change plan</summary>
+      <div class="settings">
+        <label>Before (per day)<input id="s-base" type="number" min="1" max="80"></label>
+        <label>Start per day<input id="s-start" type="number" min="1" max="60"></label>
+        <label>Target per day<input id="s-target" type="number" min="0" max="60"></label>
+        <label>Days per step<input id="s-step" type="number" min="1" max="14"></label>
+        <label>Pack price (€)<input id="s-price" type="number" step="0.1" min="0"></label>
+        <label>Plan start date<input id="s-date" type="date"></label>
+      </div>
+      <div class="row" style="margin-top:12px"><button id="save">Save plan</button></div>
+    </details>
+    <p class="note">Data stays in this browser on this device.</p>
+  </section>
+</div>
+
+<script>
+const KEY="stepdown-v1";
+const today=()=>dayKey(new Date());
+function dayKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function parseDay(k){const[a,b,c]=k.split("-").map(Number);return new Date(a,b-1,c)}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.plan)return s}catch(e){}
+  return{plan:{start:10,target:10,step:2,price:5.5,base:20,date:today()},log:[],beat:0}}
+let S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+function limitFor(k){const p=S.plan;const d=Math.floor((parseDay(k)-parseDay(p.date))/864e5);
+  if(d<0)return p.start;return Math.max(p.target,p.start-Math.floor(d/p.step))}
+function countFor(k){return S.log.filter(t=>dayKey(new Date(t))===k).length}
+
+function render(){
+  const k=today(),n=countFor(k),lim=limitFor(k);
+  document.getElementById("date").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"short"});
+  document.getElementById("n").textContent=n;document.getElementById("lim").textContent=lim;
+  const slots=document.getElementById("slots");slots.innerHTML="";
+  for(let i=0;i<Math.max(lim,n);i++){const s=document.createElement("div");s.className="slot"+(i<n?(i<lim?" used":" over"):"");slots.appendChild(s)}
+  const st=document.getElementById("status"),left=lim-n;
+  st.className="status"+(left<0?" over":"");
+  st.textContent=left>0?`${left} left today. Try to space them out.`:left===0?"That's your limit for today. You can do this.":`${-left} over today. No guilt, just start fresh tomorrow.`;
+  // since last
+  const last=S.log.length?S.log[S.log.length-1]:null;
+  document.getElementById("since").textContent=last?fmtDur(Date.now()-last):"—";
+  // saved: vs starting baseline across plan days
+  let saved=0,d=parseDay(S.plan.date);const end=parseDay(k);
+  while(d<=end){const dk=dayKey(d);saved+=Math.max(0,(S.plan.base||20)-countFor(dk));d.setDate(d.getDate()+1)}
+  document.getElementById("saved").textContent="€"+(saved*S.plan.price/20).toFixed(2);
+  document.getElementById("month").textContent="€"+Math.round(Math.max(0,(S.plan.base||20)-lim)*S.plan.price/20*30);
+  // bars
+  const bars=document.getElementById("bars");bars.innerHTML="";
+  const days=[];for(let i=6;i>=0;i--){const x=new Date();x.setDate(x.getDate()-i);days.push(dayKey(x))}
+  const max=Math.max(S.plan.start,...days.map(countFor),1);
+  days.forEach(dk=>{const c=countFor(dk),l=limitFor(dk);
+    bars.insertAdjacentHTML("beforeend",`<div class="bar"><b>${c}</b><div class="col"><div class="fill${c>l?" over":""}" style="height:${c/max*100}%"></div><div class="lim" style="bottom:${l/max*100}%"></div></div><small>${parseDay(dk).toLocaleDateString(undefined,{weekday:"short"}).slice(0,2)}</small></div>`)});
+  // plan table
+  const p=S.plan,plan=document.getElementById("plan");plan.innerHTML="";
+  const steps=p.start-p.target;
+  for(let i=0;i<=steps;i++){const from=parseDay(p.date);from.setDate(from.getDate()+i*p.step);
+    const to=new Date(from);to.setDate(to.getDate()+p.step-1);
+    const val=p.start-i,isNow=val===lim;
+    const range=i===steps?`From ${from.toLocaleDateString(undefined,{day:"numeric",month:"short"})}`:`${from.toLocaleDateString(undefined,{day:"numeric",month:"short"})} – ${to.toLocaleDateString(undefined,{day:"numeric",month:"short"})}`;
+    plan.insertAdjacentHTML("beforeend",`<tr class="${isNow?"now":""}"><td>${range}${isNow?" · now":""}</td><td>${val} / day</td></tr>`)}
+  document.getElementById("beat").textContent=S.beat?`${S.beat} craving${S.beat>1?"s":""} beaten`:"";
+}
+function fmtDur(ms){const m=Math.floor(ms/6e4);if(m<60)return m+"m";const h=Math.floor(m/60);return h<24?h+"h "+(m%60)+"m":Math.floor(h/24)+"d "+(h%24)+"h"}
+
+document.getElementById("log").onclick=()=>{S.log.push(Date.now());save();render()};
+document.getElementById("undo").onclick=()=>{const k=today();for(let i=S.log.length-1;i>=0;i--){if(dayKey(new Date(S.log[i]))===k){S.log.splice(i,1);break}}save();render()};
+
+const tips=["Drink a full glass of cold water, slowly.","Walk somewhere for a few minutes.","Ten slow breaths: in for 4, out for 6.","Chew gum or eat something crunchy.","Text someone, or get up and change rooms.","Keep your hands busy: wash a dish, tidy one thing."];
+let tId=null;
+document.getElementById("crave").onclick=function(){
+  if(tId){clearInterval(tId);tId=null;this.textContent="Start 5-minute delay";document.getElementById("timer").textContent="5:00";return}
+  let left=300;const tip=document.getElementById("tip");tip.textContent=tips[Math.floor(Math.random()*tips.length)];
+  this.textContent="Stop";
+  tId=setInterval(()=>{left--;document.getElementById("timer").textContent=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");
+    if(left%60===0&&left>0)tip.textContent=tips[Math.floor(Math.random()*tips.length)];
+    if(left<=0){clearInterval(tId);tId=null;S.beat++;save();document.getElementById("crave").textContent="Start 5-minute delay";
+      document.getElementById("timer").textContent="Done";tip.textContent="You waited it out. If you still want one, that's okay, but you just proved you can wait.";render()}},1000)};
+
+const f=id=>document.getElementById(id);
+function fillSettings(){f("s-start").value=S.plan.start;f("s-target").value=S.plan.target;f("s-step").value=S.plan.step;f("s-price").value=S.plan.price;f("s-date").value=S.plan.date;f("s-base").value=S.plan.base||20}
+f("save").onclick=()=>{const st=+f("s-start").value||20,tg=Math.min(+f("s-target").value,st);
+  S.plan={start:st,target:isNaN(tg)?10:tg,step:Math.max(1,+f("s-step").value||2),price:+f("s-price").value||0,base:+f("s-base").value||20,date:f("s-date").value||today()};
+  save();render();f("save").textContent="Saved";setTimeout(()=>f("save").textContent="Save plan",1500)};
+fillSettings();render();setInterval(render,60000);
+</script>
+
+</body>
+</html>
