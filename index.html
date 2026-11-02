@@ -87,7 +87,7 @@ details summary{cursor:pointer;font-weight:600}
     <div class="meta">
       <div><div class="label">Since last</div><div class="v" id="since">—</div></div>
       <div><div class="label">Saved so far</div><div class="v" id="saved">€0</div></div>
-      <div><div class="label">Saved / month</div><div class="v" id="month">€0</div></div>
+      <div><div class="label">On track / month</div><div class="v" id="month">€0</div></div>
     </div>
   </section>
 
@@ -150,8 +150,10 @@ function render(){
   const last=S.log.length?S.log[S.log.length-1]:null;
   document.getElementById("since").textContent=last?fmtDur(Date.now()-last):"—";
   // saved: vs starting baseline across plan days
-  let saved=0,d=parseDay(S.plan.date);const end=parseDay(k);
-  while(d<=end){const dk=dayKey(d);saved+=Math.max(0,(S.plan.base||20)-countFor(dk));d.setDate(d.getDate()+1)}
+  // past days count in full; today builds up through the day, so savings grow gradually
+  const base=S.plan.base||20;let saved=0,d=parseDay(S.plan.date);const end=parseDay(k);
+  while(d<end){saved+=Math.max(0,base-countFor(dayKey(d)));d.setDate(d.getDate()+1)}
+  if(parseDay(S.plan.date)<=end){const frac=(Date.now()-end)/864e5;saved+=Math.max(0,base*frac-n)}
   document.getElementById("saved").textContent="€"+(saved*S.plan.price/20).toFixed(2);
   document.getElementById("month").textContent="€"+Math.round(Math.max(0,(S.plan.base||20)-lim)*S.plan.price/20*30);
   // bars
